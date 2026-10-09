@@ -44,3 +44,9 @@ Configure after deployment:
 NEXT_PUBLIC_SOURCELOCK_CONTRACT=0x0000000000000000000000000000000000000000
 NEXT_PUBLIC_GENLAYER_ENDPOINT=https://studio.genlayer.com/api
 ```
+
+Deploy the contract:
+
+```bash
+python scripts/deploy-sourcelock.py
+```

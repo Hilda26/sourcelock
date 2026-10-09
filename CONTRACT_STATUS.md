@@ -14,6 +14,7 @@
 ```bash
 npm run lint
 npx next build --webpack
+genvm-lint check contracts/SourceLock.py --json
 python -m pytest tests/direct -q
 ```
 
