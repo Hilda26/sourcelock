@@ -1,0 +1,6 @@
+{
+  "buildCommand": "npx next build --webpack",
+  "devCommand": "next dev --webpack",
+  "installCommand": "npm install --ignore-scripts",
+  "framework": "nextjs"
+}
