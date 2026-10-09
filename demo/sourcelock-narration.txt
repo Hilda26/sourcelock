@@ -1,0 +1,7 @@
+SourceLock walkthrough video.
+1. SourceLock is now a GenLayer StudioNet app, not a mock dashboard.
+2. A source is bonded, snapshotted, hashed, and stored by the Intelligent Contract.
+3. Reviews fetch the current source and use validator consensus to decide whether it materially changed.
+4. Challenges are bonded and resolved by consensus against counter-evidence.
+5. Live StudioNet proof: deploy, lock, review, open challenge, and resolve challenge all finalized.
+6. Production reads the live registry through the Vercel API route.
