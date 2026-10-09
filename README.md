@@ -2,6 +2,8 @@
 
 SourceLock is a GenLayer app for source-backed public commitments. A claimant bonds a URL and a precise commitment, the Intelligent Contract snapshots and hashes the page, and later reviews/challenges use validator consensus to decide whether the source materially drifted.
 
+Production app: `https://sourcelock-gamma.vercel.app`
+
 ## Local Development
 
 ```bash

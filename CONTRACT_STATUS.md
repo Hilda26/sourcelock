@@ -25,6 +25,7 @@ StudioNet:
 ```text
 Contract: 0x00DBBA73dAd28d25FFB16EaF8D15bb387e79E130
 Deploy tx: 0xac3b271db92371c0291d42cfbfa7a2477ff33aa9c396bd7bf017fb5b0d0c7ff6
+Production app: https://sourcelock-gamma.vercel.app
 ```
 
 ## Live Verification
