@@ -558,15 +558,22 @@ button {
   background: var(--green);
 }
 
+.state-dot.locked {
+  background: var(--purple);
+}
+
 .state-dot.changed {
   background: var(--orange);
 }
 
-.state-dot.disputed {
+.state-dot.disputed,
+.state-dot.challenged,
+.state-dot.revoked {
   background: var(--red);
 }
 
-.state-dot.pending {
+.state-dot.pending,
+.state-dot.retired {
   background: var(--purple);
 }
 
@@ -780,6 +787,141 @@ button {
   font-weight: 700;
 }
 
+.empty-contract {
+  margin-bottom: 20px;
+  border: 1px solid #ffd39d;
+  background: #fff8ea;
+}
+
+.empty-contract h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+.empty-contract p,
+.muted-copy {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.warning-strip {
+  border: 1px solid #ffd39d;
+  background: #fff8ea;
+}
+
+.empty-state {
+  padding: 18px;
+  border: 1px dashed #c6c0d7;
+  border-radius: 8px;
+  background: #fbfbff;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.action-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.compact-action {
+  align-content: start;
+}
+
+.compact-action > div:first-child p {
+  margin: 0;
+  color: var(--purple);
+  font-weight: 850;
+  font-size: 14px;
+}
+
+.compact-action > div:first-child h2 {
+  margin: 5px 0 0;
+  font-size: 25px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+label.wide {
+  grid-column: 1 / -1;
+}
+
+input,
+textarea {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfbff;
+  color: var(--ink);
+  padding: 10px 12px;
+  outline: 0;
+}
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.primary-action,
+.secondary-action {
+  min-height: 46px;
+  border: 0;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: #fff;
+  font-weight: 850;
+}
+
+.primary-action {
+  background: linear-gradient(135deg, var(--purple-dark), var(--purple));
+}
+
+.secondary-action {
+  background: #1a1824;
+}
+
+.secondary-action:disabled {
+  cursor: not-allowed;
+  background: #c8c3d8;
+}
+
+.form-error {
+  margin: 0;
+  color: var(--red);
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.tx-stack {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 730;
+}
+
+.tx-stack div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .mobile-nav {
   display: none;
 }
@@ -901,6 +1043,10 @@ button {
   .mobile-nav button.active {
     background: #ece7ff;
     color: var(--purple);
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 }
 

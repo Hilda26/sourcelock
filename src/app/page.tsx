@@ -1,11 +1,9 @@
 "use client";
 
 import {
-  Activity,
+  AlertTriangle,
   ArrowUpRight,
-  Bell,
   BookOpen,
-  CalendarClock,
   Check,
   ChevronRight,
   CircleDot,
@@ -13,12 +11,8 @@ import {
   Clock3,
   DatabaseZap,
   FileClock,
-  Flame,
-  Gauge,
-  Gift,
   History,
   Home,
-  Layers3,
   Link2,
   LockKeyhole,
   Menu,
@@ -26,85 +20,16 @@ import {
   RefreshCcw,
   Search,
   Settings,
-  Share2,
   ShieldAlert,
-  ShieldCheck,
-  Sparkles,
-  SquareStack,
-  TriangleAlert,
   UserRound,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { ChallengeSourceForm, LockSourceForm, ReviewSourceForm } from "@/components/lock-source-form";
+import { useWallet } from "@/components/wallet-provider";
+import { CONTRACT_ADDRESS, EMPTY_DASHBOARD, type Dashboard, type LockedSource, loadDashboard } from "@/lib/sourcelock";
 
-type SourceState = "Stable" | "Changed" | "Disputed" | "Pending";
-
-type SourceRecord = {
-  id: number;
-  title: string;
-  owner: string;
-  url: string;
-  state: SourceState;
-  lockedAt: string;
-  drift: number;
-  snapshots: number;
-};
-
-const sources: SourceRecord[] = [
-  {
-    id: 1,
-    title: "Refund policy remains available for annual plans",
-    owner: "Atlas Cloud",
-    url: "atlas.example/legal/refunds",
-    state: "Changed",
-    lockedAt: "09:20",
-    drift: 68,
-    snapshots: 14,
-  },
-  {
-    id: 2,
-    title: "Open-source roadmap keeps self-hosting commitment",
-    owner: "Northstar Labs",
-    url: "northstar.example/roadmap",
-    state: "Stable",
-    lockedAt: "08:45",
-    drift: 12,
-    snapshots: 28,
-  },
-  {
-    id: 3,
-    title: "Creator royalty terms do not reduce payout floor",
-    owner: "Mintlane",
-    url: "mintlane.example/terms",
-    state: "Disputed",
-    lockedAt: "Yesterday",
-    drift: 84,
-    snapshots: 9,
-  },
-  {
-    id: 4,
-    title: "Carbon removal report still names the same registry",
-    owner: "Verdant Works",
-    url: "verdant.example/report",
-    state: "Pending",
-    lockedAt: "Queued",
-    drift: 34,
-    snapshots: 6,
-  },
-];
-
-const tasks = [
-  { label: "Review two changed commitments", points: "+450 lock score", progress: 75, icon: ClipboardCheck },
-  { label: "Invite an auditor to the workspace", points: "+120 trust reach", progress: 35, icon: Share2 },
-  { label: "Resolve one disputed source", points: "+800 reputation", progress: 15, icon: ShieldAlert },
-];
-
-const history = [
-  { label: "Refund policy wording changed", detail: "Materiality check opened", time: "12 min ago", tone: "warning" },
-  { label: "Roadmap source recaptured", detail: "Digest matched prior lock", time: "44 min ago", tone: "good" },
-  { label: "Royalty terms challenged", detail: "Bonded contradiction posted", time: "2 hr ago", tone: "danger" },
-  { label: "New source added", detail: "Carbon registry report queued", time: "4 hr ago", tone: "neutral" },
-];
+type Filter = "All" | "LOCKED" | "STABLE" | "CHANGED" | "CHALLENGED" | "REVOKED";
 
 const nav = [
   { label: "Dashboard", icon: Home },
@@ -115,22 +40,46 @@ const nav = [
 ];
 
 export default function HomePage() {
-  const [filter, setFilter] = useState<"All" | SourceState>("All");
+  const [filter, setFilter] = useState<Filter>("All");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [dashboard, setDashboard] = useState<Dashboard>(EMPTY_DASHBOARD);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>();
+  const { address, connected, connect, disconnect } = useWallet();
+
+  async function refresh() {
+    setLoading(true);
+    setError(undefined);
+    try {
+      setDashboard(await loadDashboard());
+    } catch (cause) {
+      setDashboard(EMPTY_DASHBOARD);
+      setError(cause instanceof Error ? cause.message : "Unable to read SourceLock on StudioNet.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void refresh();
+  }, []);
 
   const visibleSources = useMemo(() => {
-    return filter === "All" ? sources : sources.filter((source) => source.state === filter);
-  }, [filter]);
+    return filter === "All" ? dashboard.sources : dashboard.sources.filter((source) => source.status === filter);
+  }, [dashboard.sources, filter]);
+
+  const selectedSource = visibleSources[0] ?? dashboard.sources[0];
+  const summary = dashboard.summary;
+  const configured = CONTRACT_ADDRESS && !/^0x0{40}$/i.test(CONTRACT_ADDRESS);
+  const integrityScore = Number(summary.sources_locked) === 0
+    ? "0.00"
+    : Math.max(0, 100 - (Number(summary.changed_sources) + Number(summary.revoked_sources) * 2) * 8).toFixed(2);
 
   return (
     <main className="app-shell">
       <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </span>
+          <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
           <strong>sourcelock</strong>
         </div>
 
@@ -148,22 +97,18 @@ export default function HomePage() {
 
         <section className="sidebar-callout">
           <BookOpen size={20} />
-          <strong>SourceLock brief</strong>
-          <p>Digest, archive, and challenge meaningful web-page changes.</p>
-          <button type="button" aria-label="Open SourceLock brief">
-            <ArrowUpRight size={16} />
-          </button>
+          <strong>Intelligent Contract</strong>
+          <p>Sources are snapshotted, hashed, reviewed, and challenged by GenLayer consensus.</p>
+          <button type="button" aria-label="Open contract brief"><ArrowUpRight size={16} /></button>
         </section>
 
         <button type="button" className="logout-button">
           <Settings size={18} />
-          Workspace settings
+          StudioNet settings
         </button>
       </aside>
 
-      {sidebarOpen && (
-        <button className="scrim" type="button" aria-label="Close menu" onClick={() => setSidebarOpen(false)} />
-      )}
+      {sidebarOpen && <button className="scrim" type="button" aria-label="Close menu" onClick={() => setSidebarOpen(false)} />}
 
       <section className="main-panel">
         <header className="topbar">
@@ -171,75 +116,59 @@ export default function HomePage() {
             <Menu size={22} />
           </button>
           <div>
-            <p>Hello, Reviewer</p>
-            <h1>Dashboard</h1>
+            <p>GenLayer StudioNet</p>
+            <h1>SourceLock</h1>
           </div>
           <div className="top-actions">
-            <button type="button" aria-label="Search dashboard">
-              <Search size={19} />
-            </button>
-            <button type="button" aria-label="Notifications">
-              <Bell size={19} />
-              <span />
-            </button>
-            <button type="button" aria-label="Profile">
-              <UserRound size={19} />
-            </button>
+            <button type="button" aria-label="Search dashboard"><Search size={19} /></button>
+            <button type="button" aria-label="Refresh contract data" onClick={() => void refresh()}><RefreshCcw size={19} /></button>
+            <button type="button" aria-label="Wallet" onClick={() => connected ? disconnect() : void connect()}><UserRound size={19} /></button>
           </div>
         </header>
 
-        <section className="referral-strip">
+        <section className={`referral-strip ${error ? "warning-strip" : ""}`}>
           <div>
-            <span className="icon-chip dark">
-              <Layers3 size={18} />
-            </span>
-            <strong>Total locked sources: 1,284</strong>
-            <small>Pending review: 18</small>
+            <span className="icon-chip dark">{error ? <AlertTriangle size={18} /> : <DatabaseZap size={18} />}</span>
+            <strong>{error ? "Contract read unavailable" : `Contract: ${shortAddress(CONTRACT_ADDRESS)}`}</strong>
+            <small>{connected ? `Wallet ${shortAddress(address ?? "")}` : "Wallet not connected"}</small>
           </div>
-          <button type="button">
-            Share
-            <Share2 size={18} />
-          </button>
+          <button type="button" onClick={() => void refresh()}>{loading ? "Reading" : "Refresh"}<RefreshCcw size={18} /></button>
         </section>
+
+        {error && (
+          <section className="empty-contract panel">
+            <h2>{configured ? "SourceLock could not read StudioNet" : "SourceLock contract not configured"}</h2>
+            <p>
+              {configured
+                ? error
+                : "Set NEXT_PUBLIC_SOURCELOCK_CONTRACT to a deployed SourceLock.py address. Until then the app shows no invented claims, reviews, or ledger rows."}
+            </p>
+          </section>
+        )}
 
         <section className="season-grid">
           <article className="season-card primary">
-            <span className="icon-chip">
-              <Sparkles size={18} />
-            </span>
-            <p>Current epoch: October Watch</p>
-            <strong>97.42</strong>
-            <small>source integrity score</small>
-            <div className="sparkline" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-              <i />
-              <i />
-              <i />
-            </div>
+            <span className="icon-chip"><LockKeyhole size={18} /></span>
+            <p>Registry integrity</p>
+            <strong>{integrityScore}</strong>
+            <small>{summary.sources_locked} source(s) locked on-chain</small>
+            <div className="sparkline" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div>
           </article>
 
           <article className="season-card soft">
-            <span className="icon-chip">
-              <CalendarClock size={18} />
-            </span>
-            <p>Today&apos;s changes</p>
-            <strong>43</strong>
-            <small>8 need materiality review</small>
+            <span className="icon-chip"><ShieldAlert size={18} /></span>
+            <p>Open pressure</p>
+            <strong>{Number(summary.changed_sources) + Number(summary.challenged_sources)}</strong>
+            <small>{summary.changed_sources} changed, {summary.challenged_sources} challenged</small>
           </article>
 
           <article className="connect-card">
             <div>
-              <span className="icon-chip teal">
-                <DatabaseZap size={18} />
-              </span>
-              <p>Archive connection</p>
-              <strong>Live</strong>
+              <span className="icon-chip teal"><FileClock size={18} /></span>
+              <p>Reviews completed</p>
+              <strong>{summary.reviews_completed}</strong>
             </div>
-            <div className="quality-ring">
-              <span>91%</span>
-            </div>
+            <div className="quality-ring"><span>{summary.total_bonded}</span></div>
           </article>
         </section>
 
@@ -248,100 +177,62 @@ export default function HomePage() {
             <div className="panel-heading">
               <div>
                 <p>Source watch</p>
-                <h2>Tracked commitments</h2>
+                <h2>Contract-backed commitments</h2>
               </div>
               <div className="segmented" aria-label="Source filters">
-                {(["All", "Stable", "Changed", "Disputed", "Pending"] as const).map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    className={filter === item ? "selected" : ""}
-                    onClick={() => setFilter(item)}
-                  >
-                    {item}
+                {(["All", "LOCKED", "STABLE", "CHANGED", "CHALLENGED", "REVOKED"] as const).map((item) => (
+                  <button key={item} type="button" className={filter === item ? "selected" : ""} onClick={() => setFilter(item)}>
+                    {titleCase(item)}
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="source-list">
-              {visibleSources.map((source) => (
-                <SourceRow key={source.id} source={source} />
-              ))}
+              {visibleSources.length === 0 ? (
+                <div className="empty-state">No contract sources match this view.</div>
+              ) : (
+                visibleSources.map((source) => <SourceRow key={source.id} source={source} />)
+              )}
             </div>
           </article>
 
-          <article className="panel">
-            <div className="panel-heading compact">
-              <div>
-                <p>Checks</p>
-                <h2>Review queue</h2>
-              </div>
-              <button type="button" className="mini-action" aria-label="Refresh review queue">
-                <RefreshCcw size={16} />
-              </button>
-            </div>
-
-            <div className="task-list">
-              {tasks.map((task) => {
-                const Icon = task.icon;
-                return (
-                  <div className="task-row" key={task.label}>
-                    <span className="task-icon">
-                      <Icon size={18} />
-                    </span>
-                    <div>
-                      <strong>{task.label}</strong>
-                      <small>{task.points}</small>
-                      <span className="progress">
-                        <i style={{ width: `${task.progress}%` }} />
-                      </span>
-                    </div>
-                    <button type="button" aria-label={`Open ${task.label}`}>
-                      <ChevronRight size={18} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </article>
-
-          <article className="panel graph-panel">
-            <div className="panel-heading compact">
-              <div>
-                <p>Drift trend</p>
-                <h2>Materiality</h2>
-              </div>
-              <span className="positive">+12.8%</span>
-            </div>
-            <div className="bar-chart" aria-label="Materiality chart">
-              {[36, 48, 42, 78, 54, 88, 61, 70, 44, 82, 57, 92].map((height, index) => (
-                <i key={index} style={{ height: `${height}%` }} />
-              ))}
-            </div>
-          </article>
+          <LockSourceForm onSettled={refresh} />
+          <ReviewSourceForm sourceId={selectedSource?.id} onSettled={refresh} />
+          <ChallengeSourceForm sourceId={selectedSource?.id} onSettled={refresh} />
 
           <article className="panel">
             <div className="panel-heading compact">
               <div>
                 <p>Live ledger</p>
-                <h2>Recent events</h2>
+                <h2>Recent contract events</h2>
               </div>
-              <span className="status-pill">Synced</span>
+              <span className="status-pill">StudioNet</span>
             </div>
             <div className="history-list">
-              {history.map((item) => (
-                <div className={`history-row ${item.tone}`} key={item.label}>
-                  <span>
-                    {item.tone === "good" ? <Check size={16} /> : item.tone === "danger" ? <X size={16} /> : <CircleDot size={16} />}
-                  </span>
+              {dashboard.reviews.slice(0, 3).map((review) => (
+                <div className={`history-row ${review.status === "STABLE" ? "good" : review.status === "MATERIAL_CHANGE" ? "warning" : "neutral"}`} key={review.id}>
+                  <span>{review.status === "STABLE" ? <Check size={16} /> : <CircleDot size={16} />}</span>
                   <div>
-                    <strong>{item.label}</strong>
-                    <small>{item.detail}</small>
+                    <strong>{review.source_id}</strong>
+                    <small>{review.status}: {review.rationale || "Review recorded."}</small>
                   </div>
-                  <time>{item.time}</time>
+                  <time>{review.reviewed_at || "pending"}</time>
                 </div>
               ))}
+              {dashboard.challenges.slice(0, 3).map((challenge) => (
+                <div className={`history-row ${challenge.status === "ACCEPTED" ? "danger" : "neutral"}`} key={challenge.id}>
+                  <span>{challenge.status === "ACCEPTED" ? <X size={16} /> : <CircleDot size={16} />}</span>
+                  <div>
+                    <strong>{challenge.source_id}</strong>
+                    <small>{challenge.status}: {challenge.statement}</small>
+                  </div>
+                  <time>{challenge.opened_at}</time>
+                </div>
+              ))}
+              {dashboard.reviews.length === 0 && dashboard.challenges.length === 0 && (
+                <div className="empty-state">No reviews or challenges have been written yet.</div>
+              )}
             </div>
           </article>
         </section>
@@ -361,37 +252,36 @@ export default function HomePage() {
   );
 }
 
-function SourceRow({ source }: { source: SourceRecord }) {
+function SourceRow({ source }: { source: LockedSource }) {
+  const score = Math.min(100, Math.max(0, Number(source.last_materiality_score || "0")));
   return (
     <article className="source-row">
-      <span className={`state-dot ${source.state.toLowerCase()}`} />
+      <span className={`state-dot ${source.status.toLowerCase()}`} />
       <div className="source-copy">
         <strong>{source.title}</strong>
-        <span>
-          <Link2 size={14} />
-          {source.url}
-        </span>
+        <span><Link2 size={14} /> {source.effective_host || source.source_url}</span>
       </div>
       <div className="source-meta">
-        <small>{source.owner}</small>
-        <b>{source.state}</b>
+        <small>{shortAddress(source.claimant)}</small>
+        <b>{titleCase(source.status)}</b>
       </div>
-      <div className="drift-meter" aria-label={`${source.drift}% drift`}>
-        <i style={{ width: `${source.drift}%` }} />
-      </div>
+      <div className="drift-meter" aria-label={`${score}% materiality`}><i style={{ width: `${score}%` }} /></div>
       <div className="source-tail">
-        <span>
-          <FileClock size={15} />
-          {source.snapshots}
-        </span>
-        <span>
-          <Clock3 size={15} />
-          {source.lockedAt}
-        </span>
+        <span><FileClock size={15} /> {source.review_count}</span>
+        <span><Clock3 size={15} /> {source.updated_at || source.locked_at}</span>
       </div>
-      <button type="button" aria-label={`Open ${source.title}`}>
-        <ChevronRight size={18} />
-      </button>
+      <button type="button" aria-label={`Open ${source.title}`}><ChevronRight size={18} /></button>
     </article>
   );
+}
+
+function shortAddress(value: string) {
+  if (!value) return "not connected";
+  if (value.length <= 14) return value;
+  return `${value.slice(0, 6)}...${value.slice(-4)}`;
+}
+
+function titleCase(value: string) {
+  if (value === "All") return value;
+  return value.toLowerCase().replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
