@@ -10,8 +10,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).parents[1]
 DEMO = ROOT / "demo"
-OUT = DEMO / "sourcelock-walkthrough-video.avi"
-SCRIPT = DEMO / "sourcelock-narration.txt"
+OUT = DEMO / "sourcelock-protocole-comprehensive-walkthrough.avi"
+SCRIPT = DEMO / "sourcelock-protocole-walkthrough-narration.txt"
 W, H = 1280, 720
 FPS = 4
 
@@ -68,7 +68,7 @@ def wrap(draw, text: str, xy, max_width: int, fnt, fill=INK, spacing=7):
     return y
 
 
-def base(title="SourceLock"):
+def base(title="SourceLock Protocole"):
     im = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(im)
     rounded(d, (24, 24, 272, 696), fill=PANEL, outline=LINE)
@@ -77,7 +77,8 @@ def base(title="SourceLock"):
     d.ellipse((110, 58, 120, 68), fill=INK)
     d.line((66, 62, 88, 51), fill=INK, width=4)
     d.line((92, 51, 114, 62), fill=INK, width=4)
-    d.text((134, 47), "sourcelock", font=BODY_BOLD, fill=INK)
+    d.text((134, 43), "sourcelock", font=BODY_BOLD, fill=INK)
+    d.text((134, 70), "protocole", font=SMALL_BOLD, fill=MUTED)
     nav = ["Dashboard", "Source Watch", "Claims", "Reviews", "History"]
     y = 126
     for i, item in enumerate(nav):
@@ -103,16 +104,34 @@ def card(draw, xy, heading, value, sub, fill=PANEL):
 
 
 def title_slide():
-    im, d = base("SourceLock")
+    im, d = base("SourceLock Protocole")
     rounded(d, (320, 150, 1210, 260), fill=PANEL)
     d.text((344, 178), "Contract-backed public source commitments", font=HEAD, fill=INK)
-    wrap(d, "SourceLock locks a URL, hashes the page, re-checks it through GenLayer consensus, and lets challengers bond counter-evidence when a public promise drifts.", (344, 222), 790, SMALL, MUTED)
+    wrap(d, "SourceLock Protocole locks a URL, hashes the page, re-checks it through GenLayer consensus, and lets challengers bond counter-evidence when a public promise drifts.", (344, 222), 790, SMALL, MUTED)
     card(d, (320, 300, 585, 500), "Registry integrity", "100.00", "1 stable source on-chain", PURPLE_DARK)
     card(d, (610, 300, 875, 500), "Open pressure", "0", "0 changed, 0 challenged", PANEL)
     card(d, (900, 300, 1210, 500), "Reviews completed", "1", "2 GEN bonded in lifecycle", PANEL)
     rounded(d, (320, 540, 1210, 618), fill=PANEL)
-    d.text((344, 566), "Production: https://project-13-gamma.vercel.app", font=MONO, fill=INK)
+    d.text((344, 566), "Production: https://sourcelock-protocole.vercel.app", font=MONO, fill=INK)
     d.text((344, 594), "Contract: 0x00DBBA73dAd28d25FFB16EaF8D15bb387e79E130", font=MONO, fill=PURPLE)
+    return im
+
+
+def problem_slide():
+    im, d = base("The Problem")
+    rounded(d, (320, 150, 1210, 622), fill=PANEL)
+    d.text((348, 178), "Public claims need durable source proof", font=HEAD, fill=INK)
+    points = [
+        ("Sources drift", "Docs, policy pages, pricing pages, and roadmap statements can change after people rely on them."),
+        ("Screenshots are weak", "A screenshot proves presentation, not a live source, its hash, or a repeatable review path."),
+        ("Disputes need bonds", "Challenge flow adds economic weight so counter-evidence is explicit, recorded, and settled."),
+        ("GenLayer fits the gap", "Validators can fetch web content and reason over material change with consensus."),
+    ]
+    y = 252
+    for heading, copy in points:
+        d.ellipse((354, y + 7, 371, y + 24), fill=PURPLE)
+        d.text((392, y), heading, font=BODY_BOLD, fill=INK)
+        y = wrap(d, copy, (392, y + 34), 720, SMALL, MUTED) + 18
     return im
 
 
@@ -135,6 +154,30 @@ def mechanism_slide():
     return im
 
 
+def architecture_slide():
+    im, d = base("Architecture")
+    columns = [
+        ("Next.js dashboard", "Nodepay-inspired operating view, wallet actions, source lists, and live ledger."),
+        ("API read route", "Server route normalizes GenLayer reads for registry, source, review, and challenge views."),
+        ("GenLayer contract", "SourceLock.py stores bonded commitments and performs web-aware consensus checks."),
+        ("StudioNet state", "Finalized transactions hold sources, reviews, challenges, verdicts, and bond totals."),
+    ]
+    x = 320
+    for i, (heading, copy) in enumerate(columns):
+        fill = PURPLE_DARK if i == 2 else PANEL
+        text = (255, 255, 255) if i == 2 else INK
+        sub = (222, 218, 255) if i == 2 else MUTED
+        rounded(d, (x, 170, x + 205, 550), fill=fill, outline=LINE)
+        d.text((x + 22, 202), f"0{i + 1}", font=HEAD, fill=TEAL if i == 2 else PURPLE)
+        wrap(d, heading, (x + 22, 270), 160, BODY_BOLD, text)
+        wrap(d, copy, (x + 22, 348), 160, SMALL, sub)
+        if i < len(columns) - 1:
+            d.line((x + 214, 350, x + 246, 350), fill=PURPLE, width=4)
+            d.polygon([(x + 246, 350), (x + 234, 342), (x + 234, 358)], fill=PURPLE)
+        x += 225
+    return im
+
+
 def live_slide():
     im, d = base("Live Contract State")
     rows = [
@@ -151,6 +194,26 @@ def live_slide():
         d.text((700, y + 22), status, font=BODY_BOLD, fill=GREEN if "STABLE" in status or "REJECTED" in status else PURPLE)
         wrap(d, detail, (700, y + 54), 430, SMALL, MUTED)
         y += 108
+    return im
+
+
+def ui_flow_slide():
+    im, d = base("Dashboard Flow")
+    areas = [
+        ("Top strip", "Contract address, wallet state, and refresh action."),
+        ("Metrics", "Registry integrity, open pressure, reviews completed, and bonded total."),
+        ("Source watch", "Filterable contract-backed commitments with host, claimant, status, score, and timestamps."),
+        ("Action panels", "Lock source, request review, and open challenge through wallet-backed writes."),
+        ("Live ledger", "Recent reviews and challenges, populated only by contract reads."),
+    ]
+    y = 150
+    for i, (heading, copy) in enumerate(areas):
+        x = 320 if i % 2 == 0 else 770
+        if i % 2 == 0 and i:
+            y += 112
+        rounded(d, (x, y, x + 415, y + 92), fill=PANEL, outline=LINE)
+        d.text((x + 22, y + 16), heading, font=BODY_BOLD, fill=INK)
+        wrap(d, copy, (x + 22, y + 48), 350, SMALL, MUTED)
     return im
 
 
@@ -173,19 +236,40 @@ def tx_slide():
 
 
 def ui_slide():
-    im, d = base("App Walkthrough")
+    im, d = base("What Changed")
     rounded(d, (320, 150, 1210, 626), fill=PANEL)
     d.text((348, 178), "First screen is the product, not a landing page", font=HEAD, fill=INK)
     bullets = [
+        "Product name and deployment target are SourceLock Protocole / sourcelock-protocole.",
         "Reads get_registry, list_sources, list_reviews, and list_challenges from StudioNet.",
         "Shows no invented rows: empty state means the contract actually has no matching records.",
         "Writes through wallet-backed actions: lock_source, review_source, and open_challenge.",
-        "The UI keeps the Nodepay-like dashboard feel while behaving like the GenLayer projects before it.",
+        "Vercel Authentication is disabled so the public app and API are accessible.",
     ]
     y = 250
     for bullet in bullets:
         d.ellipse((354, y + 8, 370, y + 24), fill=TEAL)
         y = wrap(d, bullet, (390, y), 720, BODY, INK) + 16
+    return im
+
+
+def deployment_slide():
+    im, d = base("Deployment")
+    rounded(d, (320, 154, 1210, 614), fill=PANEL)
+    rows = [
+        ("GitHub", "https://github.com/Hilda26/sourcelock"),
+        ("Vercel", "https://sourcelock-protocole.vercel.app"),
+        ("Project", "sourcelock-protocole"),
+        ("Contract", "0x00DBBA73dAd28d25FFB16EaF8D15bb387e79E130"),
+        ("Endpoint", "https://studio.genlayer.com/api"),
+    ]
+    y = 200
+    for label, value in rows:
+        d.text((354, y), label, font=BODY_BOLD, fill=PURPLE)
+        d.text((520, y + 2), value, font=MONO, fill=INK)
+        y += 70
+    rounded(d, (344, 560, 1185, 588), fill=(230, 255, 247))
+    d.text((362, 564), "Public access verified with homepage 200 OK and live registry API response.", font=SMALL_BOLD, fill=(5, 104, 78))
     return im
 
 
@@ -197,6 +281,7 @@ def verification_slide():
         "npx next build --webpack - passed",
         "genvm-lint check contracts/SourceLock.py --json - passed",
         "Production API get_registry - reads live StudioNet state",
+        "Vercel Authentication - disabled for public access",
         "Live lifecycle - lock, review, challenge, resolve - passed",
     ]
     y = 200
@@ -205,7 +290,7 @@ def verification_slide():
         d.text((410, y), check, font=BODY, fill=INK)
         y += 58
     rounded(d, (320, 598, 1210, 650), fill=PURPLE_DARK)
-    d.text((348, 613), "GitHub: https://github.com/Hilda26/sourcelock", font=MONO, fill=(255, 255, 255))
+    d.text((348, 613), "Production: https://sourcelock-protocole.vercel.app", font=MONO, fill=(255, 255, 255))
     return im
 
 
@@ -282,18 +367,31 @@ def avi(frames, durations):
 
 def main():
     DEMO.mkdir(exist_ok=True)
-    frames = [title_slide(), mechanism_slide(), live_slide(), tx_slide(), ui_slide(), verification_slide()]
-    avi(frames, [4, 4, 4, 5, 4, 4])
+    frames = [
+        title_slide(),
+        problem_slide(),
+        mechanism_slide(),
+        architecture_slide(),
+        live_slide(),
+        ui_flow_slide(),
+        tx_slide(),
+        ui_slide(),
+        deployment_slide(),
+        verification_slide(),
+    ]
+    avi(frames, [5, 5, 5, 5, 5, 5, 6, 5, 5, 5])
     SCRIPT.write_text(
         "\n".join(
             [
-                "SourceLock walkthrough video.",
-                "1. SourceLock is now a GenLayer StudioNet app, not a mock dashboard.",
-                "2. A source is bonded, snapshotted, hashed, and stored by the Intelligent Contract.",
-                "3. Reviews fetch the current source and use validator consensus to decide whether it materially changed.",
-                "4. Challenges are bonded and resolved by consensus against counter-evidence.",
-                "5. Live StudioNet proof: deploy, lock, review, open challenge, and resolve challenge all finalized.",
-                "6. Production reads the live registry through the Vercel API route.",
+                "SourceLock Protocole comprehensive walkthrough video.",
+                "1. The app is a GenLayer StudioNet product, not a mock dashboard.",
+                "2. The problem: source-backed claims can drift, and screenshots are not enough.",
+                "3. A claimant bonds a URL, the Intelligent Contract snapshots and hashes it, and reviews re-fetch the source.",
+                "4. Challenges post bonded counter-evidence and are resolved by validator consensus.",
+                "5. The frontend reads live registry, source, review, and challenge state through the API route.",
+                "6. Wallet-backed writes call lock_source, review_source, and open_challenge.",
+                "7. Live StudioNet proof: deploy, lock, review, open challenge, and resolve challenge all finalized.",
+                "8. Public Vercel access is enabled at https://sourcelock-protocole.vercel.app.",
             ]
         )
     )

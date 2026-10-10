@@ -80,7 +80,7 @@ export default function HomePage() {
       <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="brand">
           <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
-          <strong>sourcelock</strong>
+          <strong>sourcelock protocole</strong>
         </div>
 
         <nav className="side-nav" aria-label="Main navigation">
@@ -117,7 +117,7 @@ export default function HomePage() {
           </button>
           <div>
             <p>GenLayer StudioNet</p>
-            <h1>SourceLock</h1>
+            <h1>SourceLock Protocole</h1>
           </div>
           <div className="top-actions">
             <button type="button" aria-label="Search dashboard"><Search size={19} /></button>
@@ -137,7 +137,7 @@ export default function HomePage() {
 
         {error && (
           <section className="empty-contract panel">
-            <h2>{configured ? "SourceLock could not read StudioNet" : "SourceLock contract not configured"}</h2>
+            <h2>{configured ? "SourceLock Protocole could not read StudioNet" : "SourceLock Protocole contract not configured"}</h2>
             <p>
               {configured
                 ? error

@@ -1,8 +1,8 @@
-# SourceLock Contract Status
+# SourceLock Protocole Contract Status
 
 ## Implemented
 
-- `contracts/SourceLock.py` is a GenLayer Intelligent Contract for source-backed public commitments.
+- `contracts/SourceLock.py` is the SourceLock Protocole GenLayer Intelligent Contract for source-backed public commitments.
 - `lock_source` snapshots a URL with `gl.nondet.web.get`, hashes the body, stores a baseline excerpt, and escrows a claimant bond.
 - `review_source` re-fetches the same URL and uses validator consensus to classify the current page as `STABLE`, `MATERIAL_CHANGE`, or `INCONCLUSIVE`.
 - `open_challenge` records bonded counter-evidence and moves the source into `CHALLENGED`.
@@ -25,7 +25,7 @@ StudioNet:
 ```text
 Contract: 0x00DBBA73dAd28d25FFB16EaF8D15bb387e79E130
 Deploy tx: 0xac3b271db92371c0291d42cfbfa7a2477ff33aa9c396bd7bf017fb5b0d0c7ff6
-Production app: https://sourcelock-gamma.vercel.app
+Production app: https://sourcelock-protocole.vercel.app
 ```
 
 ## Live Verification

@@ -1,0 +1,9 @@
+SourceLock Protocole comprehensive walkthrough video.
+1. The app is a GenLayer StudioNet product, not a mock dashboard.
+2. The problem: source-backed claims can drift, and screenshots are not enough.
+3. A claimant bonds a URL, the Intelligent Contract snapshots and hashes it, and reviews re-fetch the source.
+4. Challenges post bonded counter-evidence and are resolved by validator consensus.
+5. The frontend reads live registry, source, review, and challenge state through the API route.
+6. Wallet-backed writes call lock_source, review_source, and open_challenge.
+7. Live StudioNet proof: deploy, lock, review, open challenge, and resolve challenge all finalized.
+8. Public Vercel access is enabled at https://sourcelock-protocole.vercel.app.

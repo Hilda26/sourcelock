@@ -3,8 +3,8 @@ import { WalletProvider } from "@/components/wallet-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SourceLock",
-  description: "A dashboard for source-backed public commitments.",
+  title: "SourceLock Protocole",
+  description: "A GenLayer dashboard for source-backed public commitments.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
