@@ -85,6 +85,7 @@ class ChangeChallenge:
     id: str
     source_id: str
     challenger: Address
+    previous_status: str
     counter_url: str
     counter_sha256: str
     counter_excerpt: str
@@ -225,12 +226,16 @@ class SourceLock(gl.Contract):
             raise gl.vm.UserError(f"{ERROR_EXPECTED} Source cannot be challenged from this state")
         if source.active_challenge_id != "":
             raise gl.vm.UserError(f"{ERROR_EXPECTED} Source already has an open challenge")
+        if source.claimant == self._sender():
+            raise gl.vm.UserError(f"{ERROR_EXPECTED} Claimant cannot challenge own source")
 
+        old_status = source.status
         excerpt, digest = self._snapshot_url(counter_url)
         challenge = ChangeChallenge(
             id=challenge_id,
             source_id=source_id,
             challenger=self._sender(),
+            previous_status=old_status,
             counter_url=counter_url,
             counter_sha256=digest,
             counter_excerpt=excerpt,
@@ -244,7 +249,6 @@ class SourceLock(gl.Contract):
         )
         self.challenges[challenge_id] = challenge
         self.challenge_ids.append(challenge_id)
-        old_status = source.status
         source.status = SOURCE_CHALLENGED
         source.active_challenge_id = challenge_id
         self.total_bonded += u256(int(gl.message.value))
@@ -277,13 +281,14 @@ class SourceLock(gl.Contract):
             challenge.bond = u256(0)
         elif decision["verdict"] == CHALLENGE_REJECTED:
             challenge.status = CHALLENGE_REJECTED
-            source.status = SOURCE_STABLE
+            source.status = self._challenge_previous_status(challenge)
             self.bonds_paid += challenge.bond
             self._pay(source.claimant, challenge.bond)
             challenge.bond = u256(0)
         else:
             challenge.status = CHALLENGE_INCONCLUSIVE
-            source.status = SOURCE_CHANGED
+            source.status = self._challenge_previous_status(challenge)
+            self.bonds_paid += challenge.bond
             self._pay(challenge.challenger, challenge.bond)
             challenge.bond = u256(0)
 
@@ -298,6 +303,8 @@ class SourceLock(gl.Contract):
             raise gl.vm.UserError(f"{ERROR_EXPECTED} Only claimant can retire")
         if source.active_challenge_id != "":
             raise gl.vm.UserError(f"{ERROR_EXPECTED} Cannot retire during challenge")
+        if not self._is_expired(source):
+            raise gl.vm.UserError(f"{ERROR_EXPECTED} Source cannot retire before expiry")
         self._retire(source)
 
     @gl.public.view
@@ -510,6 +517,7 @@ Return JSON only:
         source.status = SOURCE_RETIRED
         self._recount_source_status(old_status, source.status)
         if int(source.bond) > 0:
+            self.bonds_paid += source.bond
             self._pay(source.claimant, source.bond)
             source.bond = u256(0)
         self.sources[source.id] = source
@@ -528,6 +536,11 @@ Return JSON only:
         if challenge_id not in self.challenges:
             raise gl.vm.UserError(f"{ERROR_EXPECTED} Unknown challenge")
         return self.challenges[challenge_id]
+
+    def _challenge_previous_status(self, challenge: ChangeChallenge) -> str:
+        if challenge.previous_status in (SOURCE_LOCKED, SOURCE_STABLE, SOURCE_CHANGED):
+            return challenge.previous_status
+        return SOURCE_LOCKED
 
     def _source_dict(self, source: LockedSource) -> dict:
         return {
@@ -571,6 +584,7 @@ Return JSON only:
             "id": challenge.id,
             "source_id": challenge.source_id,
             "challenger": str(challenge.challenger),
+            "previous_status": challenge.previous_status,
             "counter_url": challenge.counter_url,
             "counter_sha256": challenge.counter_sha256,
             "counter_excerpt": challenge.counter_excerpt,
@@ -622,8 +636,7 @@ Return JSON only:
         return str(value).replace("</", "< /").replace("```", "` ` `").strip()
 
     def _now(self) -> str:
-        raw = str(gl.message_raw.get("datetime", ""))
-        return raw if raw != "" else datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
     def _now_timestamp(self) -> int:
         return self._parse_timestamp(self._now())

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Link2, LockKeyhole, ShieldCheck } from "lucide-react";
+import { Archive, CheckCircle2, Link2, LockKeyhole, ShieldCheck } from "lucide-react";
 import { useWallet } from "@/components/wallet-provider";
 import { useTransaction } from "@/lib/tx/useTransaction";
 
@@ -118,6 +118,64 @@ export function ChallengeSourceForm({ sourceId, onSettled }: { sourceId?: string
       <label>Bond GEN<input inputMode="numeric" value={form.bond} onChange={(event) => update("bond", event.target.value)} /></label>
       <button type="button" className="secondary-action" disabled={!sourceId} onClick={() => void submit()}>
         Open challenge
+      </button>
+      {tx.error && <p className="form-error">{tx.error}</p>}
+      <TxStack transactions={tx.transactions} />
+    </section>
+  );
+}
+
+export function ResolveChallengeForm({ challengeId, onSettled }: { challengeId?: string; onSettled: () => Promise<void> }) {
+  const { address, connect } = useWallet();
+  const tx = useTransaction(onSettled);
+  const [manualId, setManualId] = useState("");
+  const resolvedChallengeId = manualId || challengeId || "";
+
+  async function submit() {
+    const account = address ?? await connect();
+    await tx.send("Resolve challenge", "resolve_challenge", [resolvedChallengeId], account);
+  }
+
+  return (
+    <section className="panel action-panel compact-action">
+      <div>
+        <p>Settle dispute</p>
+        <h2>Resolve challenge</h2>
+      </div>
+      <label>Challenge ID<input placeholder={challengeId || "challenge id"} value={manualId} onChange={(event) => setManualId(event.target.value)} /></label>
+      <button type="button" className="secondary-action" disabled={!resolvedChallengeId} onClick={() => void submit()}>
+        <CheckCircle2 size={17} />
+        Resolve challenge
+      </button>
+      {!resolvedChallengeId && <p className="muted-copy">Select a challenged source or enter a challenge ID to run the consensus settlement path.</p>}
+      {tx.error && <p className="form-error">{tx.error}</p>}
+      <TxStack transactions={tx.transactions} />
+    </section>
+  );
+}
+
+export function RetireSourceForm({ sourceId, expiresAt, onSettled }: { sourceId?: string; expiresAt?: string; onSettled: () => Promise<void> }) {
+  const { address, connect } = useWallet();
+  const tx = useTransaction(onSettled);
+  const [manualId, setManualId] = useState("");
+  const retiredSourceId = manualId || sourceId || "";
+
+  async function submit() {
+    const account = address ?? await connect();
+    await tx.send("Retire source", "retire_source", [retiredSourceId], account);
+  }
+
+  return (
+    <section className="panel action-panel compact-action">
+      <div>
+        <p>Expiry payout</p>
+        <h2>Retire source</h2>
+      </div>
+      <label>Source ID<input placeholder={sourceId || "source id"} value={manualId} onChange={(event) => setManualId(event.target.value)} /></label>
+      {expiresAt && <p className="muted-copy">Retirement pays the claimant bond only after expiry: {expiresAt}</p>}
+      <button type="button" className="secondary-action" disabled={!retiredSourceId} onClick={() => void submit()}>
+        <Archive size={17} />
+        Retire source
       </button>
       {tx.error && <p className="form-error">{tx.error}</p>}
       <TxStack transactions={tx.transactions} />

@@ -25,7 +25,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { ChallengeSourceForm, LockSourceForm, ReviewSourceForm } from "@/components/lock-source-form";
+import { ChallengeSourceForm, LockSourceForm, ResolveChallengeForm, RetireSourceForm, ReviewSourceForm } from "@/components/lock-source-form";
 import { useWallet } from "@/components/wallet-provider";
 import { CONTRACT_ADDRESS, EMPTY_DASHBOARD, type Dashboard, type LockedSource, loadDashboard } from "@/lib/sourcelock";
 
@@ -200,6 +200,8 @@ export default function HomePage() {
           <LockSourceForm onSettled={refresh} />
           <ReviewSourceForm sourceId={selectedSource?.id} onSettled={refresh} />
           <ChallengeSourceForm sourceId={selectedSource?.id} onSettled={refresh} />
+          <ResolveChallengeForm challengeId={selectedSource?.active_challenge_id} onSettled={refresh} />
+          <RetireSourceForm sourceId={selectedSource?.id} expiresAt={selectedSource?.expires_at} onSettled={refresh} />
 
           <article className="panel">
             <div className="panel-heading compact">

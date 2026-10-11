@@ -113,7 +113,7 @@ def title_slide():
     card(d, (900, 300, 1210, 500), "Reviews completed", "1", "2 GEN bonded in lifecycle", PANEL)
     rounded(d, (320, 540, 1210, 618), fill=PANEL)
     d.text((344, 566), "Production: https://sourcelock-protocole.vercel.app", font=MONO, fill=INK)
-    d.text((344, 594), "Contract: 0x00DBBA73dAd28d25FFB16EaF8D15bb387e79E130", font=MONO, fill=PURPLE)
+    d.text((344, 594), "Contract: 0x5518987316f919396A7420CEf16b5c5ECC2ee1cE", font=MONO, fill=PURPLE)
     return im
 
 
@@ -260,7 +260,7 @@ def deployment_slide():
         ("GitHub", "https://github.com/Hilda26/sourcelock"),
         ("Vercel", "https://sourcelock-protocole.vercel.app"),
         ("Project", "sourcelock-protocole"),
-        ("Contract", "0x00DBBA73dAd28d25FFB16EaF8D15bb387e79E130"),
+        ("Contract", "0x5518987316f919396A7420CEf16b5c5ECC2ee1cE"),
         ("Endpoint", "https://studio.genlayer.com/api"),
     ]
     y = 200

@@ -64,6 +64,7 @@ export type ChangeChallenge = {
   id: string;
   source_id: string;
   challenger: string;
+  previous_status: SourceStatus;
   counter_url: string;
   counter_sha256: string;
   counter_excerpt: string;

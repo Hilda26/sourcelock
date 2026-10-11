@@ -2,6 +2,7 @@ import os
 import time
 from pathlib import Path
 
+from gltest.accounts import get_accounts
 from gltest import get_contract_factory
 from gltest.assertions import tx_execution_succeeded
 from gltest.types import TransactionStatus
@@ -11,7 +12,7 @@ from gltest_cli.config.user import load_user_config
 
 
 ROOT = Path(__file__).parents[1]
-DEFAULT_ADDRESS = "0x00DBBA73dAd28d25FFB16EaF8D15bb387e79E130"
+DEFAULT_ADDRESS = "0x5518987316f919396A7420CEf16b5c5ECC2ee1cE"
 SOURCE_URL = "https://raw.githubusercontent.com/Hilda26/sourcelock/main/README.md"
 COUNTER_URL = "https://raw.githubusercontent.com/Hilda26/sourcelock/main/CONTRACT_STATUS.md"
 
@@ -47,6 +48,8 @@ def main() -> None:
     challenge_id = f"{source_id}-challenge"
     factory = get_contract_factory(contract_file_path="SourceLock.py")
     registry = factory.build_contract(contract_address=address)
+    accounts = get_accounts()
+    challenger_registry = registry.connect(accounts[1]) if len(accounts) > 1 else registry
 
     title = "SourceLock README states the GenLayer product purpose"
     commitment = (
@@ -83,13 +86,13 @@ def main() -> None:
                 "This challenge intentionally exercises the bonded dispute path. The counter-source is the contract status "
                 "document, so it should not by itself prove that the README materially weakened the locked commitment."
             )
-            wait_tx(registry.open_challenge(args=[challenge_id, source_id, COUNTER_URL, statement]), "OPEN_CHALLENGE", value=1)
+            wait_tx(challenger_registry.open_challenge(args=[challenge_id, source_id, COUNTER_URL, statement]), "OPEN_CHALLENGE", value=1)
             challenge = registry.get_challenge(args=[challenge_id]).call()
             print(f"SOURCELOCK_LIFECYCLE CHALLENGE_STATUS={challenge['status']}")
 
     source = registry.get_source(args=[source_id]).call()
     if source["status"] == "CHALLENGED":
-        wait_tx(registry.resolve_challenge(args=[challenge_id]), "RESOLVE_CHALLENGE")
+        wait_tx(challenger_registry.resolve_challenge(args=[challenge_id]), "RESOLVE_CHALLENGE")
 
     final_source = registry.get_source(args=[source_id]).call()
     final_challenge = registry.get_challenge(args=[challenge_id]).call()
